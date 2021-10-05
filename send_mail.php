@@ -9,9 +9,7 @@ require('HTDOCS/form/PHPMailer/src/Exception.php');
 require('HTDOCS/form/PHPMailer/src/SMTP.php');
 define( "FILE_DIR", "images/test/");
 // Composerを利用した場合、requireは下記だけでOK
-// require('path/to/vendor/autoload.php');
-:
-:
+require'vendor/autoload.php';
 // 続きの処理
 // 文字エンコードを指定
 mb_language('uni');
