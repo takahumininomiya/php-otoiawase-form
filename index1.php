@@ -1,4 +1,5 @@
 <?php
+require'send_mail.php'
 
 define( "FILE_DIR", "images/test/");
 
