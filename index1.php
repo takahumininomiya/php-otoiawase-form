@@ -1,4 +1,7 @@
 <?php
+require"HTDOCS/form/send_mail.php"
+?>
+<?php
 
 define( "FILE_DIR", "images/test/");
 
@@ -110,6 +113,7 @@ if( !empty($_POST['btn_confirm']) ) {
 		$body .= chunk_split(base64_encode(file_get_contents(FILE_DIR.$clean['attachment_file'])));
 		$body .= "--__BOUNDARY__\n";
 	}
+	
 	// 自動返信メール送信
 	mb_send_mail( $_POST['email'], $auto_reply_subject,$body, $auto_reply_text, $header);
 
