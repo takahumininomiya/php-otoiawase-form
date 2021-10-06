@@ -1,7 +1,14 @@
 <?php
-require'send_mail.php'
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
+use PHPMailer\PHPMailer\SMTP;
 
-define( "FILE_DIR", "images/test/");
+define( FILE_DIR, "/images/test/");
+
+// 設置した場所のパスを指定する
+require('./PHPMailer/src/PHPMailer.php');
+require('./PHPMailer/src/Exception.php');
+require('./PHPMailer/src/SMTP.php');
 
 // 変数の初期化
 $page_flag = 0;
@@ -10,160 +17,103 @@ $error = array();
 
 
 // サニタイズ
-if( !empty($_POST) ) {
+if( !empty($_POST) ) 
+{
 	foreach( $_POST as $key => $value ) {
 		$clean[$key] = htmlspecialchars( $value, ENT_QUOTES);
 	}
 }
 
-if( !empty($_POST['btn_confirm']) ) {
+if( !empty($_POST['btn_confirm']) )
+{
 	$error = validation($clean);
 	// ファイルのアップロード
-	if( !empty($_FILES['attachment_file']['tmp_name']) ) {
-
+	if( !empty($_FILES['attachment_file']['tmp_name']) ) 
+	{
 		$upload_res = move_uploaded_file( $_FILES['attachment_file']['tmp_name'], FILE_DIR.$_FILES['attachment_file']['name']);
-
-		if( $upload_res !== true ) {
+		if( $upload_res !== true ) 
+		{
 			$error[] = 'ファイルのアップロードに失敗しました。';
 		} else {
 			$clean['attachment_file'] = $_FILES['attachment_file']['name'];
 		}
 	}
 
-	if( empty($error) ) {
-
+	if( empty($error) ) 
+	{
 	$page_flag = 1;
 	// セッションの書き込み
 	session_start();
 	$_SESSION['page'] = true;
 	}
-} elseif( !empty($_POST['btn_submit']) ) {
+} elseif( !empty($_POST['btn_submit']) )
+{
 	session_start();
-	if( !empty($_SESSION['page']) && $_SESSION['page'] === true ) {
+	if( !empty($_SESSION['page']) && $_SESSION['page'] === true )
+	{
 
 		// セッションの削除
 		unset($_SESSION['page']);
 	
-	$page_flag = 2;
+		$page_flag = 2;
 
-	// 変数とタイムゾーンを初期化
-	$header = null;
-	$body = null;
-	$auto_reply_subject = null;
-	$auto_reply_text = null;
-	$admin_reply_subject = null;
-	$admin_reply_text = null;
-	date_default_timezone_set('Asia/Tokyo');
+		// 変数とタイムゾーンを初期化
+		$header = null;
+		$body = null;
+		$auto_reply_subject = null;
+		$auto_reply_text = null;
+		$admin_reply_subject = null;
+		$admin_reply_text = null;
+		date_default_timezone_set('Asia/Tokyo');
 
 		//日本語の使用宣言
-		mb_language("ja");
-		mb_internal_encoding("UTF-8");
+		//mb_language("ja");
+		//mb_internal_encoding("UTF-8");
+		// 文字エンコードを指定
+		mb_language('uni');
+		mb_internal_encoding('UTF-8');
 
-	$header = "MIME-Version: 1.0\n";
-	$header = "Content-Type: multipart/mixed;boundary=\"__BOUNDARY__\"\n";
-	$header .= "From: GRAYCODE <noreply@gray-code.com>\n";
-	$header .= "Reply-To: GRAYCODE <noreply@gray-code.com>\n";
+		// インスタンスを生成（true指定で例外を有効化）
+		$mail = new PHPMailer(true);
 
-	// 件名を設定
-	$auto_reply_subject = 'お問い合わせありがとうございます。';
+		// 文字エンコードを指定
+		$mail->CharSet = 'utf-8';
 
-	// 本文を設定
-	$auto_reply_text = "この度は、お問い合わせ頂き誠にありがとうございます。
-下記の内容でお問い合わせを受け付けました。\n\n";
-	$auto_reply_text .= "お問い合わせ日時：" . date("Y-m-d H:i") . "\n";
-	$auto_reply_text .= "氏名：" . $_POST['your_name'] . "\n";
-	$auto_reply_text .= "メールアドレス：" . $_POST['email'] . "\n";
-
-	if( $_POST['gender'] === "male" ) {
-		$auto_reply_text .= "性別：男性\n";
-	} else {
-		$auto_reply_text .= "性別：女性\n";
+		try {
+		// デバッグ設定
+		// $mail->SMTPDebug = 2; // デバッグ出力を有効化（レベルを指定）
+		// $mail->Debugoutput = function($str, $level) {echo "debug level $level; message: $str<br>";};
+	  
+		// SMTPサーバの設定
+		$mail->isSMTP();                          // SMTPの使用宣言
+		$mail->Host       = 'smtp.gmail.com';   // SMTPサーバーを指定
+		$mail->SMTPAuth   = true;                 // SMTP authenticationを有効化
+		$mail->Username   = 'lotte04715923210@gmail.com';   // SMTPサーバーのユーザ名
+		$mail->Password   = 'lotte0471';           // SMTPサーバーのパスワード
+		$mail->SMTPSecure = 'tls';  // 暗号化を有効（tls or ssl）無効の場合はfalse
+		$mail->Port       = 465; // TCPポートを指定（tlsの場合は465や587）
+	  
+		// 送受信先設定（第二引数は省略可）
+		$mail->setFrom('from@example.com', '差出人名'); // 送信者
+		$mail->addAddress('to@xxxx.com', '受信者名');   // 宛先
+		$mail->addReplyTo('replay@example.com', 'お問い合わせ'); // 返信先
+		$mail->addCC('cc@example.com', '受信者名'); // CC宛先
+		$mail->Sender = 'return@example.com'; // Return-path
+	  
+		// 送信内容設定
+		//以下の内容をメッセージに合わせて修正する
+		$mail->Subject = '件名'; 
+		$mail->Body    = 'メッセージ本文';  
+	  
+		// 送信
+		$mail->send();
+	    } catch (Exception $e) {
+		// エラーの場合
+		echo "Message could not be sent. Mailer Error: {$mail->ErrorInfo}";
+	  }
+	  //DBに書き込む処理
+	  
 	}
-	
-	if( $_POST['age'] === "1" ){
-		$auto_reply_text .= "年齢：〜19歳\n";
-	} elseif ( $_POST['age'] === "2" ){
-		$auto_reply_text .= "年齢：20歳〜29歳\n";
-	} elseif ( $_POST['age'] === "3" ){
-		$auto_reply_text .= "年齢：30歳〜39歳\n";
-	} elseif ( $_POST['age'] === "4" ){
-		$auto_reply_text .= "年齢：40歳〜49歳\n";
-	} elseif( $_POST['age'] === "5" ){
-		$auto_reply_text .= "年齢：50歳〜59歳\n";
-	} elseif( $_POST['age'] === "6" ){
-		$auto_reply_text .= "年齢：60歳〜\n";
-	}
-
-	$auto_reply_text .= "お問い合わせ内容：" . nl2br($_POST['contact']) . "\n\n";
-	$auto_reply_text .= "GRAYCODE 事務局";
-	// テキストメッセージをセット
-	$body = "--__BOUNDARY__\n";
-	$body .= "Content-Type: text/plain; charset=\"ISO-2022-JP\"\n\n";
-	$body .= $auto_reply_text . "\n";
-	$body .= "--__BOUNDARY__\n";
-
-	// ファイルを添付
-	if( !empty($clean['attachment_file']) ) {
-		$body .= "Content-Type: application/octet-stream; name=\"{$clean['attachment_file']}\"\n";
-		$body .= "Content-Disposition: attachment; filename=\"{$clean['attachment_file']}\"\n";
-		$body .= "Content-Transfer-Encoding: base64\n";
-		$body .= "\n";
-		$body .= chunk_split(base64_encode(file_get_contents(FILE_DIR.$clean['attachment_file'])));
-		$body .= "--__BOUNDARY__\n";
-	}
-	// 自動返信メール送信
-	mb_send_mail( $_POST['email'], $auto_reply_subject,$body, $auto_reply_text, $header);
-	// 運営側へ送るメールの件名
-	$admin_reply_subject = "お問い合わせを受け付けました";
-	
-	// 本文を設定
-	$admin_reply_text = "下記の内容でお問い合わせがありました。\n\n";
-	$admin_reply_text .= "お問い合わせ日時：" . date("Y-m-d H:i") . "\n";
-	$admin_reply_text .= "氏名：" . $_POST['your_name'] . "\n";
-	$admin_reply_text .= "メールアドレス：" . $_POST['email'] . "\n";
-
-	if( $_POST['gender'] === "male" ) {
-		$admin_reply_text .= "性別：男性\n";
-	} else {
-		$admin_reply_text .= "性別：女性\n";
-	}
-	
-	if( $_POST['age'] === "1" ){
-		$admin_reply_text .= "年齢：〜19歳\n";
-	} elseif ( $_POST['age'] === "2" ){
-		$admin_reply_text .= "年齢：20歳〜29歳\n";
-	} elseif ( $_POST['age'] === "3" ){
-		$admin_reply_text .= "年齢：30歳〜39歳\n";
-	} elseif ( $_POST['age'] === "4" ){
-		$admin_reply_text .= "年齢：40歳〜49歳\n";
-	} elseif( $_POST['age'] === "5" ){
-		$admin_reply_text .= "年齢：50歳〜59歳\n";
-	} elseif( $_POST['age'] === "6" ){
-		$admin_reply_text .= "年齢：60歳〜\n";
-	}
-
-	$admin_reply_text .= "お問い合わせ内容：" . nl2br($_POST['contact']) . "\n\n";
-	// テキストメッセージをセット
-$body = "--__BOUNDARY__\n";
-$body .= "Content-Type: text/plain; charset=\"ISO-2022-JP\"\n\n";
-$body .= $admin_reply_text . "\n";
-$body .= "--__BOUNDARY__\n";
-
-// ファイルを添付
-if( !empty($clean['attachment_file']) ) {
-	$body .= "Content-Type: application/octet-stream; name=\"{$clean['attachment_file']}\"\n";
-	$body .= "Content-Disposition: attachment; filename=\"{$clean['attachment_file']}\"\n";
-	$body .= "Content-Transfer-Encoding: base64\n";
-	$body .= "\n";
-	$body .= chunk_split(base64_encode(file_get_contents(FILE_DIR.$clean['attachment_file'])));
-	$body .= "--__BOUNDARY__\n";
-}
-
-	// 管理者へメール送信
-	mb_send_mail( 'webmaster@gray-code.com', $admin_reply_subject, $admin_reply_text, $header);
-} else {
-	$page_flag = 0;
-}
 }
 function validation($data) {
 
@@ -213,7 +163,7 @@ function validation($data) {
 }
 ?>
 
-<!DOCTYPE>
+<!DOCTYPE html>
 <html lang="ja">
 <head>
 <title>お問い合わせフォーム</title>
